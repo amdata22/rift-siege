@@ -1,0 +1,607 @@
+:root {
+  color-scheme: dark;
+  --hud-green: #6dd56f;
+  --hud-orange: #efad4b;
+  --hud-red: #ff4f4f;
+  --hud-blue: #8cc8ff;
+  --hud-shield: #4dd8ff;
+  --hud-shield-dim: #2a8aaa;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #04070a;
+}
+
+canvas {
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.menu {
+  pointer-events: auto;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at center, rgba(5, 9, 14, 0.68), rgba(4, 7, 12, 0.95));
+}
+
+.menu-card {
+  width: min(640px, 92vw);
+  padding: 24px;
+  border: 1px solid rgba(156, 199, 255, 0.35);
+  background: linear-gradient(180deg, rgba(12, 18, 28, 0.95), rgba(7, 11, 18, 0.92));
+  backdrop-filter: blur(3px);
+}
+
+.menu h1 {
+  margin: 0 0 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: clamp(22px, 3vw, 34px);
+}
+
+.menu p {
+  margin: 8px 0;
+  color: #bcd7ff;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.difficulty-row {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.menu button {
+  pointer-events: auto;
+  border: 1px solid rgba(152, 196, 255, 0.4);
+  color: #d9eaff;
+  background: #102136;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.menu button:hover {
+  background: #163458;
+}
+
+.hud-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.health-wrap {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+}
+
+.shield-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--hud-shield);
+  opacity: 0.8;
+}
+
+.shield-segments {
+  margin-top: 4px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.shield-segment {
+  width: 22px;
+  height: 7px;
+  border: 1px solid rgba(77, 216, 255, 0.3);
+  background: rgba(20, 24, 30, 0.85);
+  transition: background 80ms linear;
+}
+
+.shield-recharging {
+  animation: shieldPulse 0.9s ease-in-out infinite;
+}
+
+@keyframes shieldPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.health-title,
+.ammo-title,
+.tracker-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #91add4;
+}
+
+.health-segments {
+  margin-top: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+.health-segment {
+  width: 22px;
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(20, 24, 30, 0.85);
+}
+
+.ammo-wrap {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  text-align: right;
+}
+
+.weapon-icon {
+  font-size: 12px;
+  color: #99bde4;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ammo-main {
+  font-size: 46px;
+  line-height: 0.9;
+  font-weight: 700;
+  color: #eaf3ff;
+  text-shadow: 0 0 20px rgba(100, 160, 255, 0.32);
+}
+
+.ammo-reserve {
+  font-size: 14px;
+  color: #9cb2d2;
+}
+
+.ammo-low {
+  color: var(--hud-red);
+  animation: ammoPulse 0.4s steps(2, jump-none) infinite;
+}
+
+@keyframes ammoPulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.keycards-wrap {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.keycard-badge {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 2px;
+  display: none;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
+}
+
+.crosshair {
+  --ch-gap: 4px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity 60ms linear;
+}
+
+.crosshair .ch-top,
+.crosshair .ch-bottom,
+.crosshair .ch-left,
+.crosshair .ch-right {
+  position: absolute;
+  background: rgba(240, 245, 255, 0.88);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+  transition: top 60ms linear, bottom 60ms linear, left 60ms linear, right 60ms linear;
+}
+
+.crosshair .ch-top {
+  width: 1.5px;
+  height: 8px;
+  left: -0.75px;
+  bottom: calc(var(--ch-gap));
+}
+
+.crosshair .ch-bottom {
+  width: 1.5px;
+  height: 8px;
+  left: -0.75px;
+  top: calc(var(--ch-gap));
+}
+
+.crosshair .ch-left {
+  width: 8px;
+  height: 1.5px;
+  top: -0.75px;
+  right: calc(var(--ch-gap));
+}
+
+.crosshair .ch-right {
+  width: 8px;
+  height: 1.5px;
+  top: -0.75px;
+  left: calc(var(--ch-gap));
+}
+
+.crosshair .ch-dot {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(255, 90, 90, 0.9);
+  border-radius: 50%;
+  top: -1px;
+  left: -1px;
+  box-shadow: 0 0 4px rgba(255, 60, 60, 0.6);
+}
+
+.crosshair.ch-sniper .ch-top,
+.crosshair.ch-sniper .ch-bottom,
+.crosshair.ch-sniper .ch-left,
+.crosshair.ch-sniper .ch-right {
+  display: none;
+}
+
+.motion-tracker {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  width: 150px;
+  text-align: center;
+}
+
+.motion-tracker canvas {
+  margin-top: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(136, 178, 225, 0.5);
+  background: rgba(2, 7, 12, 0.52);
+}
+
+.interact {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 32px);
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #dcecff;
+  text-shadow: 0 0 10px rgba(56, 130, 255, 0.5);
+  opacity: 0;
+  transition: opacity 120ms linear;
+}
+
+.interact.visible {
+  opacity: 1;
+}
+
+.level-label {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  color: #d7e7ff;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.damage-indicator {
+  position: absolute;
+  inset: 0;
+}
+
+.damage-arc {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220px;
+  height: 220px;
+  margin-left: -110px;
+  margin-top: -110px;
+  border: 4px solid transparent;
+  border-top-color: rgba(255, 70, 70, 0.85);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 60ms linear;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 54%, rgba(130, 0, 0, 0.34) 100%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.journal-badge {
+  position: absolute;
+  left: 16px;
+  top: 48px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(180, 210, 255, 0.75);
+  text-shadow: 0 0 12px rgba(80, 140, 255, 0.35);
+}
+
+.journal-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%) translateY(12px);
+  max-width: min(520px, 92vw);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease, transform 280ms ease;
+}
+
+.journal-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.journal-toast-inner {
+  padding: 14px 18px;
+  border: 1px solid rgba(120, 180, 255, 0.35);
+  background: linear-gradient(165deg, rgba(8, 14, 24, 0.94), rgba(4, 8, 14, 0.92));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.journal-toast-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a8c8ff;
+  margin-bottom: 8px;
+}
+
+.journal-toast-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #d4e4f8;
+  white-space: pre-wrap;
+}
+
+.journal-toast-hint {
+  margin-top: 10px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(140, 170, 210, 0.55);
+}
+
+.journal-log {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 12, 0.72);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  z-index: 30;
+}
+
+.journal-log.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.journal-log-panel {
+  width: min(640px, 94vw);
+  max-height: min(78vh, 640px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(130, 180, 255, 0.4);
+  background: linear-gradient(180deg, rgba(10, 16, 26, 0.98), rgba(5, 9, 15, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+}
+
+.journal-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9ebce8;
+  border-bottom: 1px solid rgba(100, 140, 200, 0.25);
+}
+
+.journal-log-close-hint {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(150, 180, 220, 0.55);
+}
+
+.journal-log-list {
+  overflow-y: auto;
+  padding: 12px 16px 20px;
+  flex: 1;
+}
+
+.journal-log-entry {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(80, 120, 180, 0.15);
+}
+
+.journal-log-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.journal-log-entry-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8eb6f0;
+  margin-bottom: 8px;
+}
+
+.journal-log-entry-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #c8daf2;
+  white-space: pre-wrap;
+}
+
+.journal-log-empty {
+  font-size: 13px;
+  color: rgba(180, 200, 230, 0.55);
+  line-height: 1.5;
+  padding: 8px 0;
+}
+
+.sniper-scope {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms linear;
+}
+
+.sniper-scope.active {
+  opacity: 1;
+}
+
+.sniper-scope .scope-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, transparent 19%, rgba(0, 0, 0, 0.97) 20%);
+}
+
+.sniper-scope .scope-reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.sniper-scope .scope-h-line,
+.sniper-scope .scope-v-line {
+  position: absolute;
+  background: rgba(200, 230, 200, 0.75);
+}
+
+.sniper-scope .scope-h-line {
+  left: -38vh;
+  top: -0.5px;
+  width: 76vh;
+  height: 1px;
+}
+
+.sniper-scope .scope-v-line {
+  left: -0.5px;
+  top: -38vh;
+  width: 1px;
+  height: 76vh;
+}
+
+.sniper-scope .scope-center-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 90, 90, 0.9);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px rgba(255, 60, 60, 0.8);
+}
+
+.sniper-scope .scope-mil-left,
+.sniper-scope .scope-mil-right,
+.sniper-scope .scope-mil-top,
+.sniper-scope .scope-mil-bottom {
+  position: absolute;
+  background: rgba(200, 230, 200, 0.6);
+}
+
+.sniper-scope .scope-mil-left {
+  left: -12vh;
+  top: -3px;
+  width: 1px;
+  height: 6px;
+}
+
+.sniper-scope .scope-mil-right {
+  left: 12vh;
+  top: -3px;
+  width: 1px;
+  height: 6px;
+}
+
+.sniper-scope .scope-mil-top {
+  top: -12vh;
+  left: -3px;
+  width: 6px;
+  height: 1px;
+}
+
+.sniper-scope .scope-mil-bottom {
+  top: 12vh;
+  left: -3px;
+  width: 6px;
+  height: 1px;
+}
+
+.shield-break {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(30, 200, 255, 0.22) 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shield-break.active {
+  animation: shieldBreakFlash 0.55s ease-out forwards;
+}
+
+@keyframes shieldBreakFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}

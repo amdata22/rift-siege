@@ -1,0 +1,23 @@
+{
+  "name": "alienx",
+  "version": "1.0.0",
+  "description": "Modern browser-first remake foundation inspired by Alien X (2001), with Three.js WebGL rendering and fast, corridor-based room-clearing combat.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.183.2",
+    "three-mesh-bvh": "^0.9.9",
+    "vite": "^8.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
+}

@@ -1,0 +1,11 @@
+Weapon models in this folder are from:
+https://github.com/BoQsc/cc0-guns-explosives-pack-glb
+
+Original source pack:
+https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack
+
+License: CC0 / Public Domain (as provided by source pack).
+Included files used by this project:
+- M4A1.glb
+- Makarov.glb
+- Shotgun.glb
