@@ -1,4 +1,4 @@
-import { AlienXGame } from "./game.js";
+import { RiftSiegeGame } from "./game.js";
 
 const app = document.querySelector("#app");
 const bootStatus = document.querySelector("#bootStatus");
@@ -37,7 +37,7 @@ if (!app) {
   showFatalError("Cannot find #app mount node in index.html");
 } else {
   setBootStatus("Initializing renderer...");
-  const game = new AlienXGame(app);
+  const game = new RiftSiegeGame(app);
   game
     .init()
     .then(() => {

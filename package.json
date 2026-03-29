@@ -1,7 +1,7 @@
 {
-  "name": "alienx",
+  "name": "rift-siege",
   "version": "1.0.0",
-  "description": "Modern browser-first remake foundation inspired by Alien X (2001), with Three.js WebGL rendering and fast, corridor-based room-clearing combat.",
+  "description": "Browser-first sci-fi FPS built with Three.js, featuring fast corridor combat, swarm AI, and objective-based progression.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -164,7 +164,7 @@ class RiftAnchor {
   }
 }
 
-export class AlienXGame {
+export class RiftSiegeGame {
   constructor(root) {
     this.root = root;
 
@@ -800,7 +800,7 @@ export class AlienXGame {
     this.menuRoot.innerHTML = `
       <div class="menu">
         <div class="menu-card">
-          <h1>ALIEN X - MODERN REMAKE</h1>
+          <h1>RIFT SIEGE</h1>
           <p>Cygnus X has gone dark. Clear the station, survive swarms, and close the rift.</p>
           <p>Controls: WASD move, Shift sprint, C crouch, F melee, Mouse aim, LMB fire, RMB ADS, R reload, E interact, F5 save, J station logs, 1-6 switch weapons.</p>
           <div class="difficulty-row">
@@ -1621,6 +1621,41 @@ export class AlienXGame {
       return obj;
     };
 
+    const markNoWarp = (mesh) => {
+      mesh.userData.noWarp = true;
+      return mesh;
+    };
+
+    const roughenMesh = (mesh, intensity = 0.02) => {
+      if (!mesh?.geometry?.attributes?.position || mesh.userData?.noWarp) return;
+      const geo = mesh.geometry.clone();
+      const pos = geo.attributes.position;
+      const seed = rand(0.8, 1.2);
+      for (let i = 0; i < pos.count; i += 1) {
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        const z = pos.getZ(i);
+        const p = Math.sin((x * 7.13 + y * 5.41 + z * 6.27) * seed) + Math.cos((x * 4.33 - z * 3.71) * seed);
+        const n = p * 0.5;
+        pos.setXYZ(
+          i,
+          x + n * intensity * (0.6 + Math.abs(y) * 0.35),
+          y + n * intensity * 0.28,
+          z + n * intensity * (0.55 + Math.abs(y) * 0.22)
+        );
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+      mesh.geometry = geo;
+    };
+
+    const roughenSubtree = (root, intensity = 0.02) => {
+      root.traverse((obj) => {
+        if (!obj.isMesh || obj.userData?.noWarp) return;
+        roughenMesh(obj, intensity * rand(0.75, 1.35));
+      });
+    };
+
     const makeBiped = (palette, armored = false) => {
       const root = new THREE.Group();
 
@@ -1660,8 +1695,8 @@ export class AlienXGame {
       // Glowing eyes
       const eyeEmissive = palette.eyeEmissive !== undefined ? palette.eyeEmissive : 0xff3300;
       const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0000, emissive: eyeEmissive, emissiveIntensity: 1.6, metalness: 0, roughness: 1 });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), eyeMat.clone());
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), eyeMat.clone());
+      const leftEye = markNoWarp(new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), eyeMat.clone()));
+      const rightEye = markNoWarp(new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), eyeMat.clone()));
       leftEye.position.set(-0.055, 0.84, 0.11);
       rightEye.position.set(0.055, 0.84, 0.11);
       root.add(leftEye, rightEye);
@@ -1672,6 +1707,8 @@ export class AlienXGame {
       rightArm.position.set(0.26, 0.1, 0.02);
       leftArm.rotation.z = 0.35;
       rightArm.rotation.z = -0.35;
+      leftArm.scale.set(1.0, 1.02, 0.96);
+      rightArm.scale.set(0.92, 0.95, 1.05);
       root.add(leftArm, rightArm);
 
       const leftHand = addShadow(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.07), skinMat));
@@ -1684,6 +1721,8 @@ export class AlienXGame {
       const rightLeg = leftLeg.clone();
       leftLeg.position.set(-0.12, -0.6, 0);
       rightLeg.position.set(0.12, -0.6, 0);
+      leftLeg.scale.set(1.04, 0.96, 1.0);
+      rightLeg.scale.set(0.94, 1.02, 1.06);
       root.add(leftLeg, rightLeg);
 
       const leftBoot = addShadow(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 0.22), clothMat));
@@ -1697,6 +1736,21 @@ export class AlienXGame {
       chestTear.position.set(0.05, 0.2, 0.145);
       chestTear.rotation.z = 0.18;
       root.add(chestTear);
+
+      const ribMat = new THREE.MeshStandardMaterial({ color: 0x3a312c, roughness: 0.95, metalness: 0.04 });
+      for (let ri = 0; ri < 3; ri += 1) {
+        const rib = addShadow(new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 5), ribMat));
+        rib.position.set(0.11 + ri * 0.03, 0.16 - ri * 0.07, 0.13);
+        rib.rotation.z = Math.PI * 0.48;
+        rib.rotation.x = -0.18;
+        root.add(rib);
+      }
+
+      const sinewMat = new THREE.MeshStandardMaterial({ color: 0x3e1712, emissive: 0x5a1c14, emissiveIntensity: 0.2, roughness: 0.92, metalness: 0.02 });
+      const sinew = addShadow(new THREE.Mesh(new THREE.CapsuleGeometry(0.014, 0.22, 3, 5), sinewMat));
+      sinew.position.set(-0.07, -0.02, 0.12);
+      sinew.rotation.z = -0.35;
+      root.add(sinew);
 
       if (armored) {
         const vest = addShadow(new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.45, 0.28), armorMat));
@@ -1713,6 +1767,7 @@ export class AlienXGame {
           roughness: 0.2,
           metalness: 0.85,
         })));
+        visor.userData.noWarp = true;
         visor.position.set(0, 0.86, 0.11);
         root.add(visor);
       }
@@ -1722,6 +1777,10 @@ export class AlienXGame {
         if (!obj.isMesh || !obj.material?.color) return;
         obj.material.color.offsetHSL(0, 0, toneShift);
       });
+
+      roughenSubtree(root, armored ? 0.013 : 0.02);
+      root.rotation.y += rand(-0.06, 0.06);
+      root.position.x += rand(-0.02, 0.02);
 
       return root;
     };
@@ -1780,8 +1839,8 @@ export class AlienXGame {
       }
 
       const crawlerEyeMat = new THREE.MeshStandardMaterial({ color: 0x0d0800, emissive: 0xff8800, emissiveIntensity: 2.0, metalness: 0, roughness: 1 });
-      const cEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), crawlerEyeMat.clone());
-      const cEyeR = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), crawlerEyeMat.clone());
+      const cEyeL = markNoWarp(new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), crawlerEyeMat.clone()));
+      const cEyeR = markNoWarp(new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), crawlerEyeMat.clone()));
       cEyeL.position.set(-0.06, 0.97, -0.26);
       cEyeR.position.set(0.06, 0.97, -0.26);
       body.add(cEyeL, cEyeR);
@@ -1793,6 +1852,8 @@ export class AlienXGame {
       rightArm.position.set(0.28, -0.02, -0.12);
       leftArm.rotation.z = 0.52;
       rightArm.rotation.z = -0.52;
+      leftArm.scale.set(1.05, 1.0, 0.92);
+      rightArm.scale.set(0.9, 1.04, 1.08);
       body.add(leftArm, rightArm);
 
       const legMat = new THREE.MeshStandardMaterial({ color: 0x323b31, roughness: 0.9, metalness: 0.02 });
@@ -1800,6 +1861,8 @@ export class AlienXGame {
       const rightLeg = leftLeg.clone();
       leftLeg.position.set(-0.12, -0.58, 0.02);
       rightLeg.position.set(0.12, -0.58, 0.02);
+      leftLeg.scale.set(0.95, 1.08, 1.0);
+      rightLeg.scale.set(1.07, 0.92, 1.03);
       body.add(leftLeg, rightLeg);
 
       const spineMat = new THREE.MeshStandardMaterial({ color: 0x2b2317, emissive: 0x7a3d18, emissiveIntensity: 0.24, roughness: 0.7, metalness: 0.12 });
@@ -1809,6 +1872,22 @@ export class AlienXGame {
         spine.rotation.x = -1.2;
         body.add(spine);
       }
+
+      const parasiteMat = new THREE.MeshStandardMaterial({
+        color: 0x2d2f22,
+        emissive: 0x7b5923,
+        emissiveIntensity: 0.35,
+        roughness: 0.85,
+        metalness: 0.08,
+      });
+      for (let pi = 0; pi < 4; pi += 1) {
+        const cyst = addShadow(new THREE.Mesh(new THREE.IcosahedronGeometry(rand(0.045, 0.075), 1), parasiteMat));
+        cyst.position.set(rand(-0.18, 0.18), rand(0.2, 0.7), rand(-0.16, 0.16));
+        body.add(cyst);
+      }
+
+      roughenSubtree(body, 0.03);
+      body.rotation.y += rand(-0.09, 0.09);
 
       return body;
     }
@@ -1843,8 +1922,8 @@ export class AlienXGame {
       body.add(jaw);
 
       const bruteEyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0000, emissive: 0xff1100, emissiveIntensity: 2.4, metalness: 0, roughness: 1 });
-      const bEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.038, 6, 6), bruteEyeMat.clone());
-      const bEyeR = new THREE.Mesh(new THREE.SphereGeometry(0.038, 6, 6), bruteEyeMat.clone());
+      const bEyeL = markNoWarp(new THREE.Mesh(new THREE.SphereGeometry(0.038, 6, 6), bruteEyeMat.clone()));
+      const bEyeR = markNoWarp(new THREE.Mesh(new THREE.SphereGeometry(0.038, 6, 6), bruteEyeMat.clone()));
       bEyeL.position.set(-0.09, 1.38, 0.18);
       bEyeR.position.set(0.09, 1.38, 0.18);
       body.add(bEyeL, bEyeR);
@@ -1856,6 +1935,8 @@ export class AlienXGame {
       rightArm.position.set(0.64, 0.45, 0.04);
       leftArm.rotation.z = 0.08;
       rightArm.rotation.z = -0.08;
+      leftArm.scale.set(1.1, 1.02, 0.95);
+      rightArm.scale.set(0.9, 1.0, 1.12);
       body.add(leftArm, rightArm);
 
       const clawMat = new THREE.MeshStandardMaterial({ color: 0x1d1a17, roughness: 0.58, metalness: 0.55 });
@@ -1870,6 +1951,8 @@ export class AlienXGame {
       const rightLeg = leftLeg.clone();
       leftLeg.position.set(-0.2, -0.55, 0);
       rightLeg.position.set(0.2, -0.55, 0);
+      leftLeg.scale.set(1.06, 1.0, 0.96);
+      rightLeg.scale.set(0.92, 1.04, 1.08);
       body.add(leftLeg, rightLeg);
 
       // Shoulder armor plates
@@ -1906,6 +1989,24 @@ export class AlienXGame {
       hornL.rotation.x = -0.35;
       hornR.rotation.x = -0.35;
       body.add(hornL, hornR);
+
+      const scarMat = new THREE.MeshStandardMaterial({
+        color: 0x2a0e0b,
+        emissive: 0x752218,
+        emissiveIntensity: 0.45,
+        roughness: 0.95,
+        metalness: 0.05,
+      });
+      for (let si = 0; si < 6; si += 1) {
+        const scar = addShadow(new THREE.Mesh(new THREE.BoxGeometry(rand(0.05, 0.12), 0.02, 0.015), scarMat));
+        scar.position.set(rand(-0.28, 0.28), rand(0.45, 1.05), 0.23 + rand(-0.02, 0.03));
+        scar.rotation.z = rand(-1.1, 1.1);
+        scar.rotation.y = rand(-0.35, 0.35);
+        body.add(scar);
+      }
+
+      roughenSubtree(body, 0.025);
+      body.rotation.y += rand(-0.05, 0.05);
 
       return body;
     }

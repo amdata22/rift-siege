@@ -313,7 +313,7 @@ export const MATERIAL_PRESETS = {
   },
 };
 
-export const STORAGE_KEY = "alienx-save-slot-v1";
+export const STORAGE_KEY = "rift-siege-save-slot-v1";
 
 /** Per-weapon muzzle flash point light color. */
 export const WEAPON_FLASH_COLORS = {

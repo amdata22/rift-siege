@@ -1,6 +1,6 @@
-# Alien X - Modern Remake (Browser FPS)
+# Rift Siege (Browser FPS)
 
-Modern browser-first remake foundation inspired by Alien X (2001), with Three.js WebGL rendering and fast, corridor-based room-clearing combat.
+Browser-first sci-fi FPS built with Three.js and fast, corridor-based room-clearing combat.
 
 ## Run
 
@@ -49,3 +49,44 @@ Install deps and run Vite:
 - Art/audio assets are currently placeholder primitives and synthesized Web Audio tones, but systems are wired for easy asset replacement.
 - Ambient storytelling pass includes simple desks/lockers/mugs/screen props, broadcast screen glitches, random PA static, and a persistent Level 2 phone ring motif.
 - Enemy pathing uses direct pursuit and room-centric behavior suitable for modular AABB corridors (no navmesh required).
+
+## Deploy To Production
+
+### Option 1: Vercel (fastest)
+
+1. Push this repo to GitHub.
+2. In Vercel, click New Project and import the repo.
+3. Keep default settings (framework: Vite).
+4. Deploy.
+
+This project includes Vercel config in [vercel.json](vercel.json).
+
+### Option 2: Netlify
+
+1. Push this repo to GitHub.
+2. In Netlify, click Add new site -> Import an existing project.
+3. Build command: npm run build
+4. Publish directory: dist
+5. Deploy.
+
+This project includes Netlify config in [netlify.toml](netlify.toml).
+
+## LinkedIn Launch Checklist
+
+1. Deploy and verify the game URL works on desktop and mobile.
+2. Open the URL in LinkedIn Post Inspector to refresh preview cache.
+3. Post with a short hook, one gameplay clip/GIF, and a direct play link.
+
+### Suggested LinkedIn Post
+
+I built Rift Siege as a browser FPS using Three.js and shipped it as a playable web game.
+
+What I focused on:
+- Fast first-person combat loop
+- Multi-level progression with doors, keys, and objectives
+- Enemy AI, locational damage, recoil, and impact feedback
+
+You can play it instantly in the browser:
+[PASTE_YOUR_PRODUCTION_URL]
+
+I would love feedback on combat feel, difficulty tuning, and enemy behavior.

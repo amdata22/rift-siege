@@ -15,14 +15,14 @@ npx vitest run src/__tests__/config.test.js  # Run a single test file
 
 ## Architecture
 
-AlienX is a browser-based first-person shooter built with Three.js (0.183), three-mesh-bvh (BVH-accelerated raycasting), and Vite (JavaScript, no TypeScript).
+Rift Siege is a browser-based first-person shooter built with Three.js (0.183), three-mesh-bvh (BVH-accelerated raycasting), and Vite (JavaScript, no TypeScript).
 
 **Three layers:**
 - **Data layer:** `src/config.js` (all tunable constants), `src/levelData.js` (4 level definitions), `src/journalData.js` (10 story log entries)
-- **Simulation layer:** `src/game.js` (~4100 lines) — the entire game class (`AlienXGame`), including the render loop, player movement/collision, weapon system, enemy AI state machines, level generation, and save/load
+- **Simulation layer:** `src/game.js` (~4100 lines) — the entire game class (`RiftSiegeGame`), including the render loop, player movement/collision, weapon system, enemy AI state machines, level generation, and save/load
 - **Presentation layer:** `src/hud.js` (DOM + canvas HUD), `src/audio.js` (Web Audio synthesis), `src/styles.css`
 
-Entry point: `index.html` → `src/main.js` → instantiates `AlienXGame`.
+Entry point: `index.html` → `src/main.js` → instantiates `RiftSiegeGame`.
 
 ## Key Systems in game.js
 
@@ -40,7 +40,7 @@ Stats in `config.js` under `ENEMIES`.
 
 **Levels:** AABB-based room geometry on a 12m grid. Color-keyed locked doors (blue/green/orange/red). Level 4 has rift anchor destruction objectives (hold E 2s × 3 anchors, requires all brutes dead).
 
-**Save system:** `localStorage` key `"alienx-save-slot-v1"`. Saves level index, difficulty, HP, weapon inventory (mag/reserve/unlocked per weapon), keycards, journal IDs. Hard mode disables manual save (F5).
+**Save system:** `localStorage` key `"rift-siege-save-slot-v1"`. Saves level index, difficulty, HP, weapon inventory (mag/reserve/unlocked per weapon), keycards, journal IDs. Hard mode disables manual save (F5).
 
 **Post-processing pipeline:** RenderPass → SSAOPass → UnrealBloomPass → OutputPass.
 

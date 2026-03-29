@@ -1,4 +1,4 @@
-# Alien X Learning Guide (Intermediate Dev)
+# Rift Siege Learning Guide (Intermediate Dev)
 
 This file explains how the current game is structured, why the systems are written this way, and how to extend them safely.
 
@@ -9,10 +9,10 @@ If you read this while stepping through the code in your editor, focus on `src/g
 ## 1) Project structure
 
 - `src/main.js`  
-  Entry point. Creates `AlienXGame`, handles startup/fatal error reporting.
+  Entry point. Creates `RiftSiegeGame`, handles startup/fatal error reporting.
 
 - `src/game.js`  
-  Core game class (`AlienXGame`) with rendering, level generation, controls, weapons, enemies, AI, collisions, and the game loop.
+  Core game class (`RiftSiegeGame`) with rendering, level generation, controls, weapons, enemies, AI, collisions, and the game loop.
 
 - `src/config.js`  
   Tunable constants: difficulty, weapon stats, enemy stats, material presets, renderer settings.
@@ -21,7 +21,7 @@ If you read this while stepping through the code in your editor, focus on `src/g
   Per-level content setup (enemy counts, keycards, ambience type, final anchors).
 
 - `src/journalData.js`  
-  Story logs (datapad pickups): ordered entries with escalating tone; spawned randomly per level in `AlienXGame.#spawnJournalPickups()`.
+  Story logs (datapad pickups): ordered entries with escalating tone; spawned randomly per level in `RiftSiegeGame.#spawnJournalPickups()`.
 
 - `src/hud.js`  
   Pure DOM/canvas HUD layer (health, ammo, crosshair, tracker, interaction prompts).
@@ -34,7 +34,7 @@ If you read this while stepping through the code in your editor, focus on `src/g
 ## 2) Boot flow and game lifecycle
 
 ### Startup
-1. `src/main.js` creates `new AlienXGame(app)` and calls `init()`.
+1. `src/main.js` creates `new RiftSiegeGame(app)` and calls `init()`.
 2. `init()` in `src/game.js` builds:
    - renderer + post FX composer
    - scene + camera + pointer lock controls
