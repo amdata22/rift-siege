@@ -895,7 +895,7 @@ export class AlienXGame {
     this.collectedJournalIds = new Set();
     this.#updateWeaponViewModelVisibility();
     this.#syncHudAmmo();
-    this.#loadLevel(this.levelIndex, true);
+    this.#loadLevel(this.levelIndex);
     if (options.continueFromSave) {
       this.#tryLoadManualSave();
     }
@@ -1006,7 +1006,7 @@ export class AlienXGame {
     }));
   }
 
-  #loadLevel(index, freshRun = false) {
+  #loadLevel(index) {
     this.#clearLevel();
     this.levelIndex = index;
     this.level = LEVELS[index];

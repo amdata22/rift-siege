@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Local editor/OS artifacts
+.DS_Store
+.vscode/
+
+# Tool-local files
+.claude/*.local.*
