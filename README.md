@@ -71,22 +71,34 @@ This project includes Vercel config in [vercel.json](vercel.json).
 
 This project includes Netlify config in [netlify.toml](netlify.toml).
 
-## LinkedIn Launch Checklist
+## How To Play
 
-1. Deploy and verify the game URL works on desktop and mobile.
-2. Open the URL in LinkedIn Post Inspector to refresh preview cache.
-3. Post with a short hook, one gameplay clip/GIF, and a direct play link.
+### Play online
 
-### Suggested LinkedIn Post
+Deploy the project (Vercel or Netlify above) and share the production URL. Players can open that URL in any modern desktop browser.
 
-I built Rift Siege as a browser FPS using Three.js and shipped it as a playable web game.
+### Play locally
 
-What I focused on:
-- Fast first-person combat loop
-- Multi-level progression with doors, keys, and objectives
-- Enemy AI, locational damage, recoil, and impact feedback
+1. `npm install`
+2. `npm run dev`
+3. Open the local URL shown in the terminal (usually `http://127.0.0.1:5173`)
 
-You can play it instantly in the browser:
-[PASTE_YOUR_PRODUCTION_URL]
+### Controls
 
-I would love feedback on combat feel, difficulty tuning, and enemy behavior.
+- `W/A/S/D`: move
+- `Mouse`: look / aim
+- `Left click`: fire
+- `Right click`: aim down sights (where supported)
+- `R`: reload
+- `Shift`: sprint
+- `C`: crouch
+- `E`: interact
+- `1-6`: weapon select
+- `Mouse wheel`: cycle weapons
+- `F`: melee
+- `J`: toggle journal log
+- `F5`: manual save (Easy/Normal)
+
+### Objective
+
+Fight through four levels, clear encounters, collect keycards to open locked doors, and complete level objectives to progress.
