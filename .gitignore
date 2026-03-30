@@ -10,3 +10,19 @@ dist/
 
 # Tool-local files
 .claude/*.local.*
+
+# Environment and secret files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa
+id_ed25519
+
+# Local override configs
+*.local
