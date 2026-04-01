@@ -75,6 +75,14 @@ canvas {
   flex-wrap: wrap;
 }
 
+.level-select-title {
+  margin-top: 16px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8aa9cf;
+}
+
 .menu button {
   pointer-events: auto;
   border: 1px solid rgba(152, 196, 255, 0.4);
@@ -89,6 +97,11 @@ canvas {
 
 .menu button:hover {
   background: #163458;
+}
+
+.menu button.active {
+  background: #2a4f7b;
+  border-color: rgba(176, 214, 255, 0.65);
 }
 
 .hud-root {
@@ -310,6 +323,25 @@ canvas {
 
 .interact.visible {
   opacity: 1;
+}
+
+.anchor-hit {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 56px);
+  transform: translateX(-50%) translateY(6px) scale(0.98);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9bd8ff;
+  text-shadow: 0 0 12px rgba(70, 180, 255, 0.55);
+  opacity: 0;
+  transition: opacity 120ms linear, transform 140ms ease;
+}
+
+.anchor-hit.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 .level-label {

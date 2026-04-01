@@ -9,6 +9,7 @@ export class Hud {
     this.damageArcAngle = 0;
     this.interactVisible = false;
     this.interactText = "";
+    this.anchorHitTimer = null;
 
     this.#build();
   }
@@ -45,6 +46,7 @@ export class Hud {
           <div class="ch-dot"></div>
         </div>
         <div class="interact" id="interactPrompt"></div>
+        <div class="anchor-hit" id="anchorHitPrompt">ANCHOR HIT</div>
         <div class="damage-indicator">
           <div class="damage-arc" id="damageArc"></div>
         </div>
@@ -95,6 +97,7 @@ export class Hud {
     this.shieldBreakEl = this.root.querySelector("#shieldBreak");
     this.crosshair = this.root.querySelector("#crosshair");
     this.interactPrompt = this.root.querySelector("#interactPrompt");
+    this.anchorHitPrompt = this.root.querySelector("#anchorHitPrompt");
     this.damageArc = this.root.querySelector("#damageArc");
     this.vignette = this.root.querySelector("#vignette");
     this.sniperScope = this.root.querySelector("#sniperScope");
@@ -256,6 +259,18 @@ export class Hud {
     }
     this.interactVisible = false;
     this.interactPrompt.classList.remove("visible");
+  }
+
+  showAnchorHit() {
+    if (!this.anchorHitPrompt) return;
+    this.anchorHitPrompt.classList.remove("visible");
+    void this.anchorHitPrompt.offsetWidth;
+    this.anchorHitPrompt.classList.add("visible");
+    if (this.anchorHitTimer) clearTimeout(this.anchorHitTimer);
+    this.anchorHitTimer = setTimeout(() => {
+      this.anchorHitPrompt.classList.remove("visible");
+      this.anchorHitTimer = null;
+    }, 180);
   }
 
   showDamage(directionRadians) {

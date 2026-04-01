@@ -160,7 +160,8 @@ class RiftAnchor {
     this.mesh = mesh;
     this.pulseLight = pulseLight;
     this.destroyed = false;
-    this.holdProgress = 0;
+    this.hp = 100;
+    this.hitFlashTimer = 0;
   }
 }
 
@@ -793,6 +794,10 @@ export class RiftSiegeGame {
 
   #showStartMenu() {
     const saved = this.#getSavedRunSummary();
+    let selectedLevelIndex = 0;
+    const levelButtons = LEVELS.map((level, index) => (
+      `<button data-level="${index}"${index === 0 ? " class=\"active\"" : ""}>${index + 1}</button>`
+    )).join("");
     const continueButton = saved
       ? `<button data-action="continue">Continue (${saved.label})</button>`
       : "";
@@ -803,6 +808,10 @@ export class RiftSiegeGame {
           <h1>RIFT SIEGE</h1>
           <p>Cygnus X has gone dark. Clear the station, survive swarms, and close the rift.</p>
           <p>Controls: WASD move, Shift sprint, C crouch, F melee, Mouse aim, LMB fire, RMB ADS, R reload, E interact, F5 save, J station logs, 1-6 switch weapons.</p>
+          <div class="level-select-title">Start Level</div>
+          <div class="difficulty-row">
+            ${levelButtons}
+          </div>
           <div class="difficulty-row">
             <button data-diff="easy">Easy</button>
             <button data-diff="normal">Normal</button>
@@ -813,11 +822,20 @@ export class RiftSiegeGame {
       </div>
     `;
 
+    for (const btn of this.menuRoot.querySelectorAll("button[data-level]")) {
+      btn.addEventListener("click", () => {
+        selectedLevelIndex = Number(btn.dataset.level) || 0;
+        for (const levelBtn of this.menuRoot.querySelectorAll("button[data-level]")) {
+          levelBtn.classList.toggle("active", levelBtn === btn);
+        }
+      });
+    }
+
     for (const btn of this.menuRoot.querySelectorAll("button[data-diff]")) {
       btn.addEventListener("click", async () => {
         await this.audio.resume();
         this.menuRoot.innerHTML = "";
-        this.#startGame(btn.dataset.diff);
+        this.#startGame(btn.dataset.diff, { startLevelIndex: selectedLevelIndex });
       });
     }
 
@@ -866,7 +884,10 @@ export class RiftSiegeGame {
 
     this.player.hp = 100;
     this.player.dead = false;
-    this.levelIndex = 0;
+    const requestedStartLevel = Number.isFinite(options.startLevelIndex)
+      ? Math.max(0, Math.min(LEVELS.length - 1, Math.floor(options.startLevelIndex)))
+      : 0;
+    this.levelIndex = requestedStartLevel;
     this.currentWeaponId = "ar";
     this.weapons.ar.unlocked = true;
     this.weapons.ar.mag = this.weapons.ar.magSize;
@@ -895,9 +916,11 @@ export class RiftSiegeGame {
     this.collectedJournalIds = new Set();
     this.#updateWeaponViewModelVisibility();
     this.#syncHudAmmo();
-    this.#loadLevel(this.levelIndex);
     if (options.continueFromSave) {
-      this.#tryLoadManualSave();
+      const loaded = this.#tryLoadManualSave();
+      if (!loaded) this.#loadLevel(this.levelIndex);
+    } else {
+      this.#loadLevel(this.levelIndex);
     }
     this.controls.lock();
   }
@@ -2274,13 +2297,6 @@ export class RiftSiegeGame {
       const anchor = new RiftAnchor(mesh, light);
       mesh.userData.anchorRef = anchor;
       this.anchors.push(anchor);
-      this.interactables.push({
-        mesh,
-        range: 2.25,
-        holdDuration: 2,
-        prompt: "Hold E - Destroy Rift Anchor",
-        onHold: (dt) => this.#updateAnchorHold(anchor, dt),
-      });
     }
 
     const portal = new THREE.Mesh(
@@ -2337,21 +2353,32 @@ export class RiftSiegeGame {
     this.portalLight = portalLight;
   }
 
-  #updateAnchorHold(anchor, dt) {
+  #destroyAnchor(anchor) {
     if (anchor.destroyed) return;
-    const aliveBrutes = this.enemies.filter((e) => e.type === "brute" && e.state !== "DEAD").length;
-    if (aliveBrutes > 0) return;
-    anchor.holdProgress += dt;
-    if (anchor.holdProgress >= 2) {
-      anchor.destroyed = true;
-      anchor.mesh.material.emissiveIntensity = 0.1;
-      anchor.pulseLight.intensity = 0;
-      anchor.mesh.visible = false;
-      const destroyed = this.anchors.filter((a) => a.destroyed).length;
-      if (destroyed >= this.anchors.length) {
-        this.#onWin();
-      }
+    anchor.destroyed = true;
+    anchor.mesh.material.emissiveIntensity = 0.1;
+    anchor.pulseLight.intensity = 0;
+    anchor.mesh.visible = false;
+    const destroyed = this.anchors.filter((a) => a.destroyed).length;
+    if (destroyed >= this.anchors.length) {
+      this.#onWin();
     }
+  }
+
+  #damageAnchor(anchor, amount, hitPoint = null) {
+    if (!anchor || anchor.destroyed) return false;
+
+    const impactPoint = hitPoint || anchor.mesh.position;
+    this.#spawnImpactSparks(impactPoint);
+    anchor.hitFlashTimer = 0.14;
+    this.hud.showAnchorHit();
+
+    anchor.hp -= Math.max(1, amount || 0);
+    if (anchor.hp <= 0) {
+      this.#destroyAnchor(anchor);
+    }
+
+    return true;
   }
 
   #updateRiftEffects(dt) {
@@ -2392,8 +2419,12 @@ export class RiftSiegeGame {
     for (const anchor of this.anchors) {
       if (anchor.destroyed) continue;
       const phase = this.anchors.indexOf(anchor) * 1.1;
-      anchor.pulseLight.intensity = 1.2 + Math.sin(t * 2.5 + phase) * 0.7;
-      anchor.mesh.material.emissiveIntensity = 1.0 + Math.sin(t * 3.0 + phase) * 0.5;
+      const baseLight = 1.2 + Math.sin(t * 2.5 + phase) * 0.7;
+      const baseEmissive = 1.0 + Math.sin(t * 3.0 + phase) * 0.5;
+      anchor.hitFlashTimer = Math.max(0, (anchor.hitFlashTimer || 0) - dt);
+      const flash = anchor.hitFlashTimer > 0 ? anchor.hitFlashTimer / 0.14 : 0;
+      anchor.pulseLight.intensity = baseLight + flash * 1.8;
+      anchor.mesh.material.emissiveIntensity = baseEmissive + flash * 2.4;
     }
 
     // Spawn rift sparks from portal rim periodically
@@ -3087,6 +3118,9 @@ export class RiftSiegeGame {
     let nearestEnemy = null;
     let nearestEnemyDist = Infinity;
     let hitPoint = null;
+    let nearestAnchor = null;
+    let nearestAnchorDist = Infinity;
+    let anchorHitPoint = null;
 
     for (const enemy of this.enemies) {
       if (enemy.state === "DEAD") continue;
@@ -3100,6 +3134,18 @@ export class RiftSiegeGame {
       }
     }
 
+    for (const anchor of this.anchors) {
+      if (anchor.destroyed || !anchor.mesh.visible) continue;
+      const anchorHit = raycaster.intersectObject(anchor.mesh, false)[0];
+      if (!anchorHit) continue;
+      const dist = anchorHit.distance;
+      if (dist < nearestAnchorDist) {
+        nearestAnchorDist = dist;
+        nearestAnchor = anchor;
+        anchorHitPoint = anchorHit.point.clone();
+      }
+    }
+
     const wallHit = raycaster.intersectObjects(this.staticMeshes, false)[0];
     let wallDist = wallHit ? wallHit.distance : Infinity;
     for (const door of this.doors) {
@@ -3108,12 +3154,17 @@ export class RiftSiegeGame {
       if (hit) wallDist = Math.min(wallDist, hit.distance);
     }
 
-    if (!nearestEnemy || nearestEnemyDist > wallDist) {
+    const targetDist = Math.min(nearestEnemyDist, nearestAnchorDist);
+    if (!Number.isFinite(targetDist) || targetDist > wallDist) {
       if (wallHit) {
         this.#spawnImpactSparks(wallHit.point);
         this.#spawnBulletHole(wallHit.point, wallHit.face?.normal ?? new THREE.Vector3(0, 1, 0));
       }
       return false;
+    }
+
+    if (nearestAnchor && nearestAnchorDist < nearestEnemyDist) {
+      return this.#damageAnchor(nearestAnchor, weapon.damage || 1, anchorHitPoint);
     }
 
     const baseDamage = weapon.damage || 0;
@@ -5218,13 +5269,13 @@ export class RiftSiegeGame {
   }
 
   #tryLoadManualSave() {
-    if (!this.difficulty.allowManualSave) return;
+    if (!this.difficulty.allowManualSave) return false;
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+    if (!raw) return false;
 
     try {
       const data = JSON.parse(raw);
-      if (!data || data.difficultyKey !== this.difficultyKey) return;
+      if (!data || data.difficultyKey !== this.difficultyKey) return false;
       this.collectedKeys = new Set(data.keys || []);
       this.collectedJournalIds = new Set(
         Array.isArray(data.journalIds) ? data.journalIds.filter((id) => JOURNAL_BY_ID[id]) : []
@@ -5261,8 +5312,10 @@ export class RiftSiegeGame {
       this.#syncJournalHud();
       this.#updateWeaponViewModelVisibility();
       this.#syncHudAmmo();
+      return true;
     } catch {
       localStorage.removeItem(STORAGE_KEY);
+      return false;
     }
   }
 

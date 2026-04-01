@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 import { GAME_CONFIG } from "../config.js";
 import { LEVELS } from "../levelData.js";
 import { splashFalloff } from "../utils.js";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const ROOM_STEP = 12;
 const DOOR_WIDTH = 2;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const GAME_SOURCE = readFileSync(resolve(__dirname, "../game.js"), "utf8");
 
 function sideFromTo(fromRoom, toRoom) {
   const dx = toRoom.x * ROOM_STEP - fromRoom.x * ROOM_STEP;
@@ -76,5 +81,36 @@ describe("room connector overlap contracts", () => {
         }
       }
     }
+  });
+});
+
+describe("rift anchor contracts", () => {
+  it("keeps anchor hp tuned to a 3-4 AR burst", () => {
+    const arDamage = GAME_CONFIG.weapons.ar.damage;
+    const anchorHp = 100;
+    const shotsToKill = Math.ceil(anchorHp / arDamage);
+    expect(shotsToKill).toBeGreaterThanOrEqual(3);
+    expect(shotsToKill).toBeLessThanOrEqual(4);
+  });
+
+  it("shows HUD anchor-hit feedback when anchor damage is applied", () => {
+    expect(GAME_SOURCE).toContain("#damageAnchor(anchor, amount, hitPoint = null)");
+    expect(GAME_SOURCE).toContain("anchor.hitFlashTimer = 0.14;");
+    expect(GAME_SOURCE).toContain("this.hud.showAnchorHit();");
+  });
+});
+
+describe("continue flow contracts", () => {
+  it("attempts manual save load before fallback level load", () => {
+    const continueBranch = /if \(options\.continueFromSave\) \{([\s\S]*?)\} else \{/m.exec(GAME_SOURCE)?.[1] || "";
+    expect(continueBranch).toContain("const loaded = this.#tryLoadManualSave();");
+    expect(continueBranch).toContain("if (!loaded) this.#loadLevel(this.levelIndex);");
+  });
+
+  it("returns boolean status from manual save loader", () => {
+    expect(GAME_SOURCE).toContain("#tryLoadManualSave() {");
+    expect(GAME_SOURCE).toContain("if (!this.difficulty.allowManualSave) return false;");
+    expect(GAME_SOURCE).toContain("if (!raw) return false;");
+    expect(GAME_SOURCE).toContain("return true;");
   });
 });
